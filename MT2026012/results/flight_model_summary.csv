@@ -1,0 +1,10 @@
+family,model,mean,std
+Ensemble (average),avg_forest_logridge,120.00718,30.68747
+Random forest,forest_final_5x3cv,121.30003,32.17569
+Ridge + polynomial (log target),logridge_degree2_alpha10_5x3cv,124.85902,30.692
+Decision tree,tree_d12_l5_s2_mlNone,128.81897,31.53518
+Other,random_forest_300,128.9715,27.83387
+Polynomial (OLS/Ridge),poly_degree2_ridge1,136.66953,24.84422
+Ridge (L2),ridge_alpha10.0,152.85092,30.12861
+Lasso (L1),lasso_alpha0.5,154.10661,31.54079
+Linear regression (OLS),ols,154.82207,25.75994

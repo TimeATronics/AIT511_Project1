@@ -1,0 +1,9 @@
+__pycache__/
+.ruff_cache/
+.ipynb_checkpoints/
+*.pyc
+reports/*.tex
+reports/*.aux
+reports/*.log
+reports/*.out
+reports/*.toc

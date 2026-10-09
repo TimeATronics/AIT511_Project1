@@ -1,0 +1,4 @@
+model,accuracy,balanced_accuracy,f1_macro
+quadratic logistic,0.8854,0.8682,0.8757
+QDA (raw features),0.8476,0.8171,0.8299
+random forest,0.8789,0.8558,0.8659

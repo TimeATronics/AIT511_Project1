@@ -1,0 +1,9 @@
+family,model,mean,std
+Other,poly_logistic_none,0.88538,0.00402
+Logistic regression (quadratic basis),poly2_logistic_C1.0,0.88538,0.00402
+Random forest,forest_depth14_leaf1_cwNone,0.87888,0.00424
+QDA,qda,0.84763,0.00372
+Decision tree,tree_ccp_0.00029824,0.84288,0.00762
+Logistic regression (linear),logistic_C10.0,0.82925,0.00298
+LDA,lda,0.82394,0.00565
+Gaussian Naive Bayes,nb_smoothing0.1,0.7535,0.00852
