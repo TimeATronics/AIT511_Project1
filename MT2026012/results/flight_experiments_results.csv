@@ -1,0 +1,7 @@
+model,note,rmse_mean,rmse_std,mae_mean,mae_std,r2_mean,r2_std
+forest_1000_feat0.5_leaf3_extended,"wider split sampling, more trees",118.1541,30.1313,43.3882,1.7707,0.716,0.0785
+forest_800_feat0.3_leaf2_extended,"narrow split sampling, smaller leaves",119.6253,29.56,44.7805,1.8621,0.709,0.0757
+forest_1000_sqrt_leaf3_extended,reference configuration with more trees,120.2558,30.4553,49.8959,1.668,0.7058,0.0802
+forest_400_sqrt_leaf3_extended,"main notebook winner, extended features",120.327,30.5228,49.9067,1.6505,0.7054,0.0806
+forest_400_sqrt_leaf3_base,"main notebook winner, base features",121.3729,30.6338,50.9696,1.669,0.7003,0.0812
+log_price_ridge_deg2_lambda10_extended,best linear model from the main notebook,126.9998,27.4398,54.9822,1.8339,0.6718,0.065
