@@ -1,12 +1,7 @@
-% ===========================================================================
-%  Machine Learning Course Project-I report
-%  Industrial Machine Condition Classification
-%  Team: Carrot
-%  Compile from this directory:  pdflatex report_machine.tex  (twice)
-% ===========================================================================
 \documentclass[11pt]{article}
 
-\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage[a4paper,margin=1.8cm]{geometry}
+\emergencystretch=1em
 \usepackage{graphicx}
 \usepackage{array}
 \usepackage{booktabs}
@@ -21,7 +16,6 @@
 \captionsetup{font=small,labelfont=bf}
 \graphicspath{{../MT2026012/figures/}}
 
-% --- styling: coloured headings and accent rule ----------------------------
 \usepackage{xcolor}
 \usepackage{titlesec}
 \usepackage{fancyhdr}
@@ -30,6 +24,21 @@
 \titleformat{\section}{\normalfont\Large\bfseries\color{sectionblue}}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalfont\large\bfseries\color{accent}}{\thesubsection}{0.6em}{}
 \titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{accent}}{\thesubsubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{3ex plus 0.5ex minus 0.3ex}{0.7ex plus 0.1ex}
+\titlespacing*{\subsection}{0pt}{2.4ex plus 0.4ex minus 0.2ex}{0.5ex plus 0.1ex}
+\titlespacing*{\subsubsection}{0pt}{1.9ex plus 0.3ex minus 0.2ex}{0.4ex}
+
+\makeatletter
+\renewcommand\@maketitle{%
+  \newpage
+  \null
+  \vskip 1.2em%
+  \begin{center}%
+    {\LARGE \@title \par}%
+  \end{center}%
+  \par
+  \vskip 2em}
+\makeatother
 \setlength{\headheight}{14pt}
 \pagestyle{fancy}
 \fancyhf{}
@@ -53,83 +62,42 @@
 \toprule
 Name & Roll number & Contribution \\
 \midrule
-Aradhya Chakrabarti & MT2026012 & \begin{itemize}[leftmargin=1.1em,itemsep=0pt,parsep=0pt,topsep=0pt]
-\item Preprocessing for the machine competition (data loading, cleaning and feature engineering)
-\item Models Tested: logistic regression (linear and quadratic), LDA, QDA, Gaussian naive Bayes, decision trees, random forests (with cross-validation, evaluation and hyperparameter tuning)
-\end{itemize} \\
-Ankit Lamba & MT2026XXX & \texttt{<contribution>} \\
-Kunal Yadav & MT2026XXX & \texttt{<contribution>} \\
-Kshitij Beri & MT2026XXX & \texttt{<contribution>} \\
+Aradhya Chakrabarti & MT2026012 & Preprocessing for the classification competition (data loading, cleaning and feature engineering); Models Tested: logistic regression (linear and quadratic), LDA, QDA, Gaussian naive Bayes, decision trees, random forests (with cross-validation, evaluation and hyperparameter tuning). Achieved the team's best public leaderboard score for the machine condition classification competition \\
+Ankit Lamba & MT2026122 & Exploratory testing and data analysis for the flight competition; tested SVR, linear regression and random forest baselines \\
+Kunal Yadav & MT2026047 & Ran preliminary prediction experiments for the flight competition \\
+Kshitij Beri & MT2026046 & Implemented an ensemble model (blend) of trees, forests and boosting; achieved the team's best public leaderboard score on the flight competition \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \section*{Source code}
-The full code for this competition is in the project repository:
-\url{https://github.com/TimeATronics/AIT511_Project1}
+The full code for this competition is in the project repository: \url{https://github.com/TimeATronics/AIT511_Project1}
 
-% ===========================================================================
 \section{Problem and dataset}
-% ===========================================================================
 
-We are given a classification problem: classify a machine into one of
-three states using sensor measurements, with 0 for normal, 1 for thermal
-failure and 2 for mechanical failure. Thermal failures are driven by
-temperature and cooling conditions, and mechanical failures by load, wear,
-torque and vibration.
+We are given a classification problem: classify a machine into one of three states using sensor measurements, with 0 for normal, 1 for thermal failure and 2 for mechanical failure. Thermal failures are driven by temperature and cooling conditions, and mechanical failures by load, wear, torque and vibration.
 
-The training file \texttt{student\_dataset.csv} has 16,000 rows, and the
-test file has 4,000 rows. The columns are unit\_type (S/M/H) and ten
-sensors: ambient\_temp, process\_temp, coolant\_flow, shaft\_speed,
-drive\_torque, power\_load, component\_wear, thermal\_stress,
-mechanical\_load and vibration\_index. The column unit\_id identifies the
-machine (16,000 unique values, none of them in the test set) and is never
-used as a feature. The evaluation metric is accuracy.
+The training file \texttt{student\_dataset.csv} has 16,000 rows, and the test file has 4,000 rows. The columns are unit\_type (S/M/H) and ten sensors: ambient\_temp, process\_temp, coolant\_flow, shaft\_speed, drive\_torque, power\_load, component\_wear, thermal\_stress, mechanical\_load and vibration\_index. The column unit\_id identifies the machine (16,000 unique values, none of them in the test set) and is never used as a feature. The evaluation metric is accuracy.
 
-We have used the following models: logistic regression (linear and
-quadratic basis), LDA, QDA, Gaussian naive Bayes, decision trees, and
-random forests.
+We have used the following models: logistic regression (linear and quadratic basis), LDA, QDA, Gaussian naive Bayes, decision trees, and random forests, along with ensembles comprising of them and variations of the same.
 
-% ===========================================================================
 \section{Data loading}
-% ===========================================================================
 
-We load the three CSV files (training, test and the sample submission)
-with pandas, print their shapes, and build a small overview frame with the
-row count, column count, duplicate rows and missing cells. There are no
-duplicate rows, but every column has a small number of missing sensor
-readings, so we handle them during preprocessing and remove no rows.
+We load the three CSV files (training, test and the sample submission) with pandas. There are no duplicate rows, but every column has a small number of missing sensor readings, so we handle them during preprocessing and remove no rows.
 
-% ===========================================================================
 \section{Exploratory data analysis}
-% ===========================================================================
-
 \subsection{Class distribution}
 
-For EDA, the first thing we check is the class balance, since an uneven
-split can make accuracy look better than the model actually is. A count
-block and a bar plot show the classes are 8,000 / 4,000 / 4,000, that is a
-2:1:1 split. A model that always predicts ``normal'' would already score
-50\% accuracy, so we report balanced accuracy and per-class metrics
-alongside accuracy.
+For EDA, the first thing we check is the class balance, since an uneven split can make the accuracy higher than what the model is actually capable of. A count block and a bar plot show the classes are 8,000 / 4,000 / 4,000, that is a 2:1:1 split. A model that always predicts ``normal`` would already score 50\% accuracy, so we report balanced accuracy and metrics per class alongside accuracy later on while evaluating models.
 
 \subsection{Sensor analysis by class}
 
-Next we look at how the sensors behave for each class, since the failures
-are supposed to follow the physics. The code computes the per-class sensor
-means and draws the mean bars and boxplots (Figures~\ref{fig:machsensors}
-and~\ref{fig:machbox}). Accordingly, we observe the following:
+Next we look at how the sensors behave for each class, since the failures are supposed to reflect the physics, that is, thermal problems should show up in temperature and stress variables, mechanical problems in wear, load and vibration. The code computes the sensor means per class and draws bar graph of means and boxplots (Figures~\ref{fig:machsensors} and~\ref{fig:machbox}). We check the average values per class below to see if that information can be observed in the data.
 
 \begin{itemize}
-  \item Thermal failures (class 1) are hotter: mean process\_temp 72.4
-        against 54.7 for normal and 62.2 for mechanical, and mean
-        thermal\_stress 37.9 against 21.3 for normal.
-  \item Mechanical failures (class 2) show more wear and load: mean
-        component\_wear 165.0 against 87.4 for normal, mechanical\_load
-        88.0 against 64.8, and vibration\_index 2.10 against 1.51.
-  \item Normal machines (class 0) have the lowest values of these
-        variables, and the boxes for the two failure classes overlap the
-        least exactly where the physical readings differ the most.
+  \item Thermal failures (class 1) are hotter: mean process\_temp 72.4 against 54.7 for normal and 62.2 for mechanical, and mean thermal\_stress 37.9 against 21.3 for normal.
+  \item Mechanical failures (class 2) show more wear and load: mean component\_wear 165.0 against 87.4 for normal, mechanical\_load 88.0 against 64.8, and vibration\_index 2.10 against 1.51.
+  \item Normal machines (class 0) have the lowest values of these variables, and the boxes for the two failure classes overlap the least exactly where the physical readings differ the most.
 \end{itemize}
 
 \begin{figure}[H]
@@ -148,147 +116,74 @@ and~\ref{fig:machbox}). Accordingly, we observe the following:
 
 \subsection{Missing value analysis}
 
-We then check how many values are missing in each column, in order to
-decide how to fill them. Missing values are few everywhere: the worst is
-vibration\_index, which loses 0.46\% of its values (74 rows), and the
-others fall between 0.14\% and 0.38\%. With numbers this small, filling
-the gaps with the column median is safe and no rows need to be dropped.
-unit\_type has 22 missing entries (0.14\%), which are filled with the most
-common type.
+We then check how many values are missing in each column, in order to decide how to fill them. The column with the most missing values is vibration\_index, which has 0.46\% of its values missing (74 rows), and the others fall between 0.14\% and 0.38\%. With numbers this small, filling the gaps with the column median is safe and no rows need to be dropped. unit\_type has 22 missing entries (0.14\%), which are filled with the most common type.
 
 \subsection{Correlation analysis}
 
-Next we check the correlations between the sensors, because they decide
-whether models that assume independent features are suitable. The heatmap
-block prints the strongest pairs as well. Fifteen pairs correlate above
-0.5: the strongest are power\_load with thermal\_stress (0.93),
-drive\_torque with power\_load (0.92), and process\_temp with
-thermal\_stress (0.86). The sensors are therefore far from independent,
-which matters for the naive Bayes classifier later.
+Next we check the correlations between the sensors, because they decide whether models that assume independent features are suitable. The heatmap block prints the strongest pairs as well. Fifteen pairs correlate above 0.5: the strongest are power\_load with thermal\_stress (0.93), drive\_torque with power\_load (0.92), and process\_temp with thermal\_stress (0.86). The sensors are therefore not really independent, which matters for the Naive Bayes classifier later.
 
 \subsection{Machine type analysis}
 
-Finally we check the machine type, since failure rates may depend on it.
-The type is informative: 42.4\% of H machines are thermal failures, while
-S machines lean towards mechanical failures (29.4\%), so we keep the type
-as a one-hot feature.
+Finally we check the machine type, since failure rates may depend on it. We observe that it is not neutral. 42.4\% of H machines are thermal failures, while S machines lean towards mechanical failures (29.4\%), so we retain type as a one-hot feature.
 
-% ===========================================================================
 \section{Data cleaning}
-% ===========================================================================
 
-There are no impossible values and no duplicate rows, so no rows are
-removed. The missing sensor readings are handled by the imputer, and
-unit\_id is set aside to line up the submissions.
+There are no impossible values and no duplicate rows, so no rows are removed.
 
-% ===========================================================================
 \section{Feature engineering}
-% ===========================================================================
 
-Since the EDA showed that the two failure classes differ mainly in
-temperature and in wear and load, we add two kinds of extra features with
-one function applied to train and test:
+Since the EDA showed that the two failure classes differ mainly in temperature and in wear and load, we add two kinds of extra features:
 
 \begin{enumerate}
-  \item \texttt{temp\_difference} $=$ process\_temp $-$ ambient\_temp.
-        Thermal failures are driven by the machine being hotter than its
-        surroundings, and the difference expresses exactly that. It is a
-        linear combination of two existing sensors, which is fine for trees
-        and logistic regression but matters for QDA
-        (Section~\ref{sec:tuning}).
-  \item \texttt{power\_per\_speed} $=$ power\_load $/$ shaft\_speed, and
-        \texttt{torque\_per\_wear} $=$ drive\_torque $/$ component\_wear:
-        rough stress-per-revolution and stress-per-wear ratios that match
-        the mechanical failure readings. Division by zero is left as a
-        missing value and handled by the imputer.
+  \item \texttt{temp\_difference} $=$ process\_temp $-$ ambient\_temp. Thermal failures are driven by the machine being hotter than its surroundings.
+  \item \texttt{power\_per\_speed} $=$ power\_load $/$ shaft\_speed, and \texttt{torque\_per\_wear} $=$ drive\_torque $/$ component\_wear. For cases where division by zero occurs, the imputer handles those as missing values.
 \end{enumerate}
 
-% ===========================================================================
 \section{Data preprocessing}
-% ===========================================================================
 
-All preprocessing is built with a scikit-learn \texttt{ColumnTransformer}
-and used inside a \texttt{Pipeline}, so during cross-validation the
-transformations are fitted on the training folds only.
+All preprocessing is done with a scikit-learn \texttt{ColumnTransformer} and used inside a \texttt{Pipeline}, so during cross-validation the transformations are fitted on the training folds only.
 
 \begin{itemize}
-  \item Missing values: the median for numeric columns, the most frequent
-        value for unit\_type.
-  \item Encoding: unit\_type is one-hot encoded, with
-        \texttt{handle\_unknown="ignore"} in case the test set contains a
-        type that training did not see.
-  \item Scaling: standardisation for the models that need it (logistic
-        regression, LDA, QDA, naive Bayes); the decision tree and the random forest use the raw
-        values.
+  \item Missing values: the median for numeric columns, the most frequent value for unit\_type.
+  \item Encoding: unit\_type is one-hot encoded, with \texttt{handle\_unknown="ignore"} in case the test set contains a type that training did not see.
+  \item Scaling: standardisation for the models that need it (logistic regression, LDA, QDA, naive Bayes).
 \end{itemize}
 
-% ===========================================================================
 \section{Model evaluation}
-% ===========================================================================
 
-We report accuracy, balanced accuracy and macro $F_1$. For a two-class
-problem with predictions $\hat{y}$ and labels $y$,
+The metric of the competition is accuracy, but as noted above, accuracy on its own can hide problems when the classes are uneven, so balanced accuracy and macro $F_1$ are recorded as well. For a two-class problem with predictions $\hat{y}$ and labels $y$,
 \[
   \mathrm{precision} = \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}}, \qquad
   \mathrm{recall} = \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}}, \qquad
   F_1 = \frac{2\,\mathrm{precision}\,\mathrm{recall}}
             {\mathrm{precision}+\mathrm{recall}},
 \]
-and the multi-class versions average these per-class values (macro $F_1$).
-Balanced accuracy is the average of the per-class recalls, so it treats
-the three classes as equally important even when the split is 2:1:1. The
-ROC curve plots
+and for the multi-class versions of these metrics, we can average these per-class values (macro $F_1$). Balanced accuracy is the average of the per-class recalls. It treats the three classes as equally important even when the split is 2:1:1. The ROC curve plots
 \[
   \mathrm{TPR} = \frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}} \quad\text{against}\quad
   \mathrm{FPR} = \frac{\mathrm{FP}}{\mathrm{FP}+\mathrm{TN}},
 \]
-and the area under it (AUC) summarises the ranking quality across all
-thresholds. All metrics come from code blocks that call
-\texttt{sklearn.metrics} on out-of-fold predictions.
+and the area under it (AUC) summarises the ranking quality across all thresholds.
 
-For validation we split the training data into $K=5$ stratified folds, so
-every fold keeps the class proportions, and average the five scores:
-$\frac{1}{K}\sum_{k=1}^{K} e_k$. The finalists are re-checked with 5 folds
-repeated 3 times (15 scores each). A fixed random state (42) is used for
-every fold split and every model, so the results repeat.
+For validation we split the training data into $K=5$ folds (maintaining the balance), and average the five scores: $\frac{1}{K}\sum_{k=1}^{K} e_k$. The final shortlisted models are re-checked with 5 folds repeated 3 times (15 scores each). A fixed random state (42) is used for every fold split and every model, to maintain reproducibility.
 
-% ===========================================================================
 \section{Model family direct comparisons (baseline)}
-% ===========================================================================
 
-We first train each classifier from the notes once with reasonable
-settings:
+We first train each model family once with reasonable settings:
 
 \begin{itemize}
-  \item \textbf{Bayes rule}: the posterior follows from the prior and the
-        likelihood,
-        \[
-          p(y\mid x) = \frac{p(x\mid y)\,p(y)}{p(x)}.
-        \]
-        The Bayes optimal classifier predicts the most probable class,
-        \[
-          f^*(x) = \arg\max_y \, p(y)\,p(x\mid y).
-        \]
-  \item \textbf{LDA}: Gaussian class-conditional densities with a shared
-        covariance matrix, giving linear boundaries.
-  \item \textbf{QDA}: Gaussian class-conditional densities with a
-        covariance per class, giving quadratic boundaries.
-  \item \textbf{Gaussian naive Bayes}: independent Gaussian features per
-        class, $p(x\mid y) = \prod_{j=1}^{d} p(x_j\mid y)$.
-  \item \textbf{Logistic regression}: models the posterior directly,
-        $\eta(x) = \sigma(w^\top x) = 1/(1+e^{-w^\top x})$, fitted by
-        maximum likelihood.
-  \item \textbf{Decision tree}: recursive binary splitting with the Gini
-        impurity, $\mathrm{Gini}(S) = 1 - \sum_k p_k^2$.
-  \item \textbf{Random forest}: an average vote over many decorrelated
-        trees.
+  \item \textbf{LDA}
+  \item \textbf{QDA}
+  \item \textbf{Gaussian naive Bayes}: independent Gaussian features per class, $p(x\mid y) = \prod_{j=1}^{d} p(x_j\mid y)$.
+  \item \textbf{Logistic regression}: $\eta(x) = \sigma(w^\top x) = 1/(1+e^{-w^\top x})$.
+  \item \textbf{Decision tree}: Recursive binary splitting with the Gini impurity, $\mathrm{Gini}(S) = 1 - \sum_k p_k^2$.
+  \item \textbf{Random forest}: A majority vote across many decorrelated trees.
 \end{itemize}
 
-The code blocks build these six pipelines, evaluate them with stratified
-5-fold cross-validation and draw the comparison chart
-(Figure~\ref{fig:machinecomp}).
+See Figure~\ref{fig:machinecomp}.
 
-\begin{center}
+\begin{table}[H]
+\centering
 \small
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{6.4cm}r@{}}
 \toprule
@@ -302,14 +197,11 @@ Decision tree (unrestricted) & 0.8056 \\
 Gaussian naive Bayes & 0.7472 \\
 \bottomrule
 \end{tabular}
-\end{center}
+\caption{Baseline comparison of the model families.}
+\label{tab:machbaseline}
+\end{table}
 
-The random forest leads at 0.878, and QDA is the strongest of the three Gaussian
-models at 0.848, which fits the EDA: the failure regions are roughly
-elliptical, so letting each class have its own covariance pays off. Plain
-logistic regression (0.828) and LDA (0.824) are below QDA because their
-boundaries are linear, and Gaussian naive Bayes is last at 0.747 because it
-assumes independent sensors while several pairs are correlated.
+We can observe that the random forest leads at 0.878, and QDA is the strongest of the three Gaussian models at 0.848. Plain logistic regression (0.828) and LDA (0.824) are below QDA because their boundaries are linear, and Gaussian naive Bayes is last at 0.747 because it assumes independent sensors while several pairs are correlated.
 
 \begin{figure}[H]
 \centering
@@ -318,81 +210,30 @@ assumes independent sensors while several pairs are correlated.
 \label{fig:machinecomp}
 \end{figure}
 
-% ===========================================================================
-\section{Hyper-parameter tuning}\label{sec:tuning}
-% ===========================================================================
+\section{Hyper-Parameter Tuning}\label{sec:tuning}
+\subsection{Logistic Regression (Linear): Regularisation Strength}
 
-\subsection{Logistic regression (linear): regularisation strength}
+The strength is set through \texttt{C}, the inverse of the L2 penalty, and we iterate over it. The results are: $C=0.01$ gives accuracy 0.818, $C=0.1$ gives 0.825, $C=1$ gives 0.828, $C=10$ gives 0.829 and $C=100$ gives 0.829. Accuracy rises up to $C=10$ and stays flat. Hence we can see that a weaker penalty coefficient is better.
 
-We start with the linear logistic model,
-\[
-  \eta(x) = P(Y=1\mid X=x) = \sigma(w^\top x)
-          = \frac{1}{1+e^{-w^\top x}},
-  \qquad \ln\frac{\eta}{1-\eta} = w^\top x,
-\]
-fitted by minimising the negative log-likelihood
-$\mathcal{L}(w) = \sum_n \ln\!\bigl(1+e^{-y_n w^\top x_n}\bigr)$, whose
-gradient is $\partial\mathcal{L}/\partial w = \sum_n (\sigma_n - y_n)x_n$.
-There is no closed form, so the solver iterates. The strength is set
-through \texttt{C}, the inverse of the L2 penalty, and we sweep it. The
-results are: $C=0.01$ gives 0.818, $C=0.1$ gives 0.825, $C=1$ gives 0.828,
-$C=10$ gives 0.829 and $C=100$ gives 0.829. Accuracy rises up to $C=10$
-and stays flat, so the data supports a weak penalty.
+\subsection{Logistic Regression with a Quadratic Basis}
 
-\subsection{Logistic regression with a quadratic basis}
+Since the boundaries in this dataset are not linear, we give the linear model squared and interaction terms of the sensors. This provides a quadratic boundary, using a pipeline with \texttt{PolynomialFeatures} at degree 2 before the logistic model. We try degree 1 versus 2 and $C \in \{0.01,0.1,1,10\}$. Degree 2 with $C=1$ reaches 0.8853, clearly above the linear version (0.829).
 
-Since the boundaries in this dataset are not linear, we give the linear
-model squared and interaction terms of the sensors. This lets the linear
-decision function bend into a quadratic boundary, the same hypothesis
-family as QDA but fitted discriminatively; the code builds a pipeline with
-\texttt{PolynomialFeatures(degree=2)} before the logistic model. We try
-degree 1 versus 2 and $C \in \{0.01,0.1,1,10\}$. Degree 2 with $C=1$
-reaches 0.8853, clearly above the linear version (0.829), and the degree-1
-rows repeat the previous sweep as a control.
+\subsection{QDA: Covariance Regularisation}
 
-\subsection{QDA: covariance regularisation}
+A small regularisation is added to each covariance, which keeps them invertible when the features are strongly related (singular matrices). When we do not add a regularization parameter, that is, \texttt{reg\_param} $=0$ the code crashes because \texttt{temp\_difference} is an exact linear combination of two sensors and the class covariance is singular. With regularisation, the QDA model shows accuracy of 0.8393, but it is below the previous accuracy of 0.8476 obtained from the raw sensors at \texttt{reg\_param} $=0.1$. Hence we continue using the raw-sensor version for QDA.
 
-QDA estimates one covariance matrix per class:
-\[
-  p(x\mid y) = \frac{1}{(2\pi)^{d/2}|\Sigma_y|^{1/2}}
-  \exp\!\Bigl(-\tfrac12 (x-\mu_y)^\top \Sigma_y^{-1} (x-\mu_y)\Bigr),
-\]
-and the Bayes rule classifies by
-$\arg\max_y \bigl[\ln p(y) - \tfrac12\ln|\Sigma_y|
-- \tfrac12(x-\mu_y)^\top\Sigma_y^{-1}(x-\mu_y)\bigr]$, a quadratic
-boundary. A small regularisation is added to each covariance for numerical
-stability. The code block first shows what happens without it: with
-\texttt{reg\_param} $=0$ the fit crashes because \texttt{temp\_difference}
-is an exact linear combination of two sensors and the class covariance is
-singular. With regularisation the best QDA on the engineered features
-reaches only 0.8393, below the 0.8476 obtained from the raw sensors at
-\texttt{reg\_param} $=0.1$: the redundant column dilutes the covariance
-estimate even when the matrix stays invertible. We therefore use the
-raw-sensor version as the QDA representative in the final tables.
+\subsection{Gaussian Naive Bayes: Variance Smoothing}
 
-\subsection{Gaussian naive Bayes: variance smoothing}
+The Naive Bayes classifier assumes the sensors are conditionally independent given the class and adds a small smoothing value to every variance. We iterate over the smoothing value from $10^{-9}$ to $0.1$. The best setting (0.1) increases the score from 0.747 to 0.754 (still far lower than the rest).
 
-The classifier assumes the sensors are conditionally independent given the
-class and adds a small smoothing value to every variance. We sweep the
-smoothing value from $10^{-9}$ to $0.1$. The best setting (0.1) increases
-the score from 0.747 to 0.754. Naive Bayes stays the weakest family by a
-wide margin, since the independence assumption does not hold for these
-sensors.
+\subsection{Decision Tree: Pre-pruning and Post-pruning}
 
-\subsection{Decision tree: pre-pruning and cost-complexity pruning}
-
-For pre-pruning we use a grid block over the same four growth limits as the
-regression tree (depth, leaf size, split size, maximum leaves). The best
-pre-pruned tree combines depth 12 with a minimum leaf size of 5 and scores
-0.8389. The unrestricted tree falls to 0.806, and depth-4 trees underfit
-around 0.772. For post-pruning we use the cost-complexity criterion
+For pre-pruning we tune four early stopping criteria: maximum depth, minimum leaf size, minimum samples needed to split a node, and the maximum number of leaves. The best pre-pruned tree has depth 12 with a minimum leaf size of 5 and scores 0.8389. The unrestricted tree falls to 0.806, and depth-4 trees underfit around 0.772. For post-pruning we use the cost-complexity criterion
 \[
   R_\lambda(T) = R(T) + \lambda |T|,
 \]
-with candidate $\lambda$ values from the pruning path. Here it helps: the
-best $\lambda$ (about $3\times10^{-4}$, keeping 161 leaves) lifts the tree
-from 0.8389 to 0.8429 (Figure~\ref{fig:machprune}), while larger $\lambda$
-values remove useful branches.
+with candidate $\lambda$ values from the pruning path. Here post-pruning helps: the best $\lambda$ (about $3\times10^{-4}$, keeping 161 leaves) increases the cross-validation accuracy of the tree from 0.8389 to 0.8429 (Figure~\ref{fig:machprune}), while larger $\lambda$ values remove useful branches.
 
 \begin{figure}[H]
 \centering
@@ -403,26 +244,11 @@ values remove useful branches.
 
 \subsection{Random forest}
 
-The grid tunes the per-tree depth, the minimum leaf size and the class
-weighting. We include class weights because the classes are split 2:1:1.
-The unweighted depth-14 random forest is the best at 0.8787, but the differences
-inside the unweighted block are tiny (0.876 to 0.879). Every
-\texttt{balanced} variant scores lower than the matching unweighted run,
-the first hint that reweighting trades overall correctness for
-minority-class attention.
+We tune the depths per tree, the minimum leaf size and the class weighting. We include class weights because the classes are split 2:1:1. The unweighted depth-14 random forest is the best at 0.8787, but the differences inside the unweighted block are tiny (0.876 to 0.879). Every \texttt{balanced} variant scores lower than the corresponding unweighted versions.
 
-% ===========================================================================
-\section{Experiment: class imbalance handling}
-% ===========================================================================
+\section{Experiment: Class Imbalance Handling}
 
-Since the 2:1:1 split could in principle hurt the two failure classes even
-while accuracy looks fine, we compare three standard treatments on the two
-leading models (the quadratic logistic regression and QDA): reweighting the
-classes, random oversampling of the minority classes, and SMOTE, which
-creates synthetic minority samples by interpolating between neighbours. The
-samplers sit inside imbalanced-learn pipelines after preprocessing, so they
-only ever see training folds. We record both accuracy and macro $F_1$,
-since accuracy alone could hide a poor minority class.
+Since the 2:1:1 split could in principle hurt the two failure classes even while accuracy looks fine, we compare three approaches further on the two best models seen so far (the quadratic logistic regression and QDA): (i) reweighting the classes, (ii) random oversampling of the minority classes, and (iii) SMOTE, which creates synthetic minority samples by interpolating between neighbours.
 
 \begin{table}[H]
 \centering
@@ -441,24 +267,65 @@ SMOTE & 0.8734 & 0.8660 \\
 \end{tabular}
 \end{table}
 
-Each of these experiment scenarios lowered both metrics. With classes that
-are already well separated and only a 2:1:1 split, the resampled training
-set biases the boundary towards synthetic or duplicated minority points
-without improving any real case, so we keep the unweighted models.
+Each of these experiment scenarios lowered both metrics. With classes that are already well separated and only a 2:1:1 split, the resampled training set biases the boundary towards synthetic or duplicated minority points without improving any real case, so we continue using the previous models only.
 
-% ===========================================================================
-\section{Model diagnostics}
-% ===========================================================================
+\section{Experiment: Combining/Blending the Top Models}
 
-\paragraph{Confusion matrices.} We compute out-of-fold predictions for the
-three leading models and draw their confusion matrices
-(Figure~\ref{fig:machconf}), with labels 0 normal, 1 thermal, 2 mechanical.
-With all the models, normal machines are recognised best (7,498 of 8,000
-for the quadratic logistic). The two failure classes each lose between 660
-and 670 machines, and most of those misses fall into the normal class,
-roughly 470 to 480 per class. Only about 180 to 200 machines swap between
-thermal and mechanical, and those two classes are the ones whose sensor
-boxes overlap the most.
+The two strongest single models seen so far are the quadratic and the cubic logistic regressors. We further tried using a cubic basis with stronger regularisation (degree 3, $C=0.3$), which reached an accuracy of 0.8894 $\pm$ 0.0031 under cross-validation, just above the quadratic model. We also tested three soft-voting combinations of the pair (considering a combination with the random forest in the third variant): The three variants are (i) an even 50/50 vote, (ii) a 60/40 vote weighted toward the quadratic model, and (iii) a 40/40/20 vote with the random forest. Each combination is scored with the same 5-fold cross-validation as everything else before.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{6.2cm}rrr@{}}
+\toprule
+Combination & Accuracy & Balanced acc. & Macro $F_1$ \\
+\midrule
+Quadratic 40\% + cubic 40\% + forest 20\% & 0.8919 & 0.8746 & 0.8828 \\
+Quadratic 50\% + cubic 50\% & 0.8909 & 0.8738 & 0.8819 \\
+Quadratic 60\% + cubic 40\% & 0.8901 & 0.8730 & 0.8810 \\
+\bottomrule
+\end{tabular}
+\caption{The three probability-vote combinations under 5-fold cross-validation.}
+\label{tab:machvotes}
+\end{table}
+
+All of these three combinations performed better than all previous models used by us so far. As per the public leaderboard scores, the 60/40 vote performs best at 0.89125, followed by the 40/40/20 vote (0.89062) and the even vote (0.89000), hence it is our best model.
+
+\section{An 80/20 test of the best model}
+
+We also test the best model and its strongest single-model member on an 80/20 split of the training data. This shows us how the models behave on rows they have never seen, and how much they still depend on the amount of training data.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.6cm}lrrr@{}}
+\toprule
+Model & Training rows & Accuracy & Balanced acc. & Macro $F_1$ \\
+\midrule
+Soft vote (60/40) & 80\% & 0.9003 & 0.8854 & 0.8921 \\
+Soft vote (60/40) & 20\% & 0.8928 & 0.8763 & 0.8834 \\
+Quadratic logistic & 80\% & 0.8953 & 0.8798 & 0.8862 \\
+Quadratic logistic & 20\% & 0.8872 & 0.8731 & 0.8782 \\
+\bottomrule
+\end{tabular}
+\caption{Scores of the best model and the quadratic logistic on the unseen 20\% of the training data.}
+\label{tab:machholdout}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.42\linewidth]{machine_80_20_confusion.png}
+\caption{Confusion matrix of the best model on the unseen 20\% of the training data.}
+\label{fig:machholdoutconf}
+\end{figure}
+
+When we train the ensemble model on 80\% of the rows it scores 0.9003 on the 20\% remaining, and still 0.8928 from just 20\%, so the decision boundary is stable and does not depend upon data volume; The quadratic logistic model also has similar, but slightly lower metrics.
+
+\section{Model Diagnostics}
+
+\paragraph{Confusion matrices.} We compute out-of-fold predictions for the three leading models and draw their confusion matrices (Figure~\ref{fig:machconf}), with labels 0 normal, 1 thermal, 2 mechanical. With all the models, normal machines are recognised best (7,498 of 8,000 for the quadratic logistic). The two failure classes each have between 660 and 670 misclassifications, and most of those misses fall into the normal class, roughly 470 to 480 per class. Only about 180 to 200 machines, upon classification, get swapped between thermal and mechanical, and those two classes are the ones whose sensor boxes overlap the most.
 
 \begin{figure}[H]
 \centering
@@ -467,26 +334,11 @@ boxes overlap the most.
 \label{fig:machconf}
 \end{figure}
 
-\paragraph{Per-class metrics.} We then print the full classification report
-for the quadratic logistic regression. Recall is 93.7\% on normal, 83.3\%
-on thermal and 83.5\% on mechanical, with precision and $F_1$ following
-closely. No class collapses: the weakest recall is still above 80\%.
+\paragraph{Per-class metrics.} We then print the full classification report for the quadratic logistic regression. Recall is 93.7\% on normal, 83.3\% on thermal and 83.5\% on mechanical, with precision and $F_1$ following closely. No class collapses, and the weakest recall is still above 80\%.
 
-\paragraph{ROC curves.} Next we draw one-vs-rest ROC curves from the
-out-of-fold class probabilities and print the area under each curve. Both
-models have almost identical overall discrimination (macro AUC 0.966 for
-the quadratic logistic against 0.962 for the random forest). The curves hug the
-top-left corner, and for the quadratic logistic the thermal class has the
-highest AUC at 0.971: even though thermal failures are the hardest to label
-correctly at the default threshold, they are the easiest to separate once
-the whole probability scale is used.
+\paragraph{ROC curves.} Next we draw one-vs-rest ROC curves from the out-of-fold class probabilities and print the area under each curve. The two have almost identical overall discrimination (macro AUC 0.967 for the 60/40 vote against 0.966 for the quadratic logistic). The curves tend to go towards the top-left corner, and in both cases the thermal class has the highest AUC (0.972 for the 60/40 vote, 0.971 for the quadratic logistic).
 
-\paragraph{Balanced metrics.} Finally we compute accuracy, balanced
-accuracy and macro $F_1$ for the three models and plot them side by side
-(Figure~\ref{fig:machbal}). The quadratic logistic regression is best on
-all three metrics (0.8854, 0.8681 and 0.8756), and the random forest is second on
-all three. Since the ranking is the same under plain and balanced metrics,
-the headline accuracy does not come from the larger normal class alone.
+\paragraph{Balanced metrics.} Finally we compute accuracy, balanced accuracy and macro $F_1$ for the three models and plot them side by side (Figure~\ref{fig:machbal}). The 60/40 vote-based ensemble model is best on all three metrics (0.8905, 0.8735 and 0.8814), the quadratic logistic model follows (0.8854, 0.8682 and 0.8757) and QDA is the worst out of these three.
 
 \begin{figure}[H]
 \centering
@@ -503,14 +355,7 @@ the headline accuracy does not come from the larger normal class alone.
 \label{fig:machbal}
 \end{figure}
 
-\paragraph{t-SNE.} We also draw a t-SNE projection of a 3,000-row sample,
-before and after feature engineering (Figure~\ref{fig:tsne}), as an
-illustration of how the classes sit relative to each other. On the raw
-sensors the three classes form broad overlapping clouds, with mechanical
-machines mostly in the upper region and thermal machines largely on the
-right. After adding the engineered features the thermal cloud tightens on
-the right and the mechanical group separates more cleanly from the normal
-machines in the middle.
+\paragraph{t-SNE.} We also draw a t-SNE projection of a 3,000-row sample, before and after feature engineering (Figure~\ref{fig:tsne}), as an illustration of how the classes are present relative to each other. On the raw sensors the three classes form broad overlapping clouds, with mechanical machines mostly in the upper region and thermal machines largely on the right. After adding the engineered features the thermal cloud becomes smaller on the right and the mechanical group separates more cleanly from the normal machines in the middle.
 
 \begin{figure}[H]
 \centering
@@ -519,25 +364,13 @@ machines in the middle.
 \label{fig:tsne}
 \end{figure}
 
-% ===========================================================================
 \section{Cross-validation of shortlisted models}
-% ===========================================================================
 
-Since a single 5-fold estimate can shift with the fold split, we
-re-evaluate the three finalists with 5 folds repeated 3 times: the
-quadratic logistic regression (0.8853 $\pm$ 0.0056), the random forest
-(0.8777 $\pm$ 0.0051) and QDA (0.8476 $\pm$ 0.0068). The ordering stays the
-same. The differences between the top two models are comparable to those
-standard deviations, so the two are close to a tie, with the quadratic
-logistic still ahead.
+Since a single 5-fold estimate can change with the fold split chosen, we re-evaluate the three best models with 5 folds repeated 3 times: the quadratic logistic regression (0.8853 $\pm$ 0.0056), the random forest (0.8777 $\pm$ 0.0051) and QDA (0.8476 $\pm$ 0.0068). We checked the same for the ensembled model (60/40 voting based) in the 80/20 test above.
 
-% ===========================================================================
-\section{Metrics comparison (full table)}
-% ===========================================================================
+\section{Metrics comparison}
 
-We finally evaluate one representative configuration per family under
-accuracy, balanced accuracy and macro $F_1$ in a single cross-validation
-pass.
+We finally evaluate one representative configuration per family under accuracy, balanced accuracy and macro $F_1$.
 
 \begin{table}[H]
 \centering
@@ -560,22 +393,11 @@ Gaussian naive Bayes (smoothing 0.1) & 0.7535 & 0.7244 & 0.7273 \\
 \caption{Machine condition: full metrics comparison.}
 \end{table}
 
-From the table we see that the quadratic logistic regression leads on all
-three metrics, the random forest follows closely, the post-pruned tree is the best
-tree, and Gaussian naive Bayes closes the list. Since the ranking is
-identical under all three metrics, the final choice does not depend on
-which metric is emphasised.
+From the table above, we see that the quadratic logistic regression leads on all three metrics among the single models, the random forest follows closely, the post-pruned tree is the best tree, and Gaussian Naive Bayes performed the worst. The ensemble model based on the 60/40 voting is ahead of every other model (0.8901 accuracy).
 
-% ===========================================================================
-\section{Submission creation and best model}
-% ===========================================================================
+\section{Submission CSV Creation and Best Model Choice}
 
-For the submissions, we fit every model on all training rows and write one
-CSV per model, aligned to the competition's sample file by unit\_id. The
-best model is also written as \texttt{submission.csv}. The models of the
-main comparison have been uploaded to the competition with a description
-of the model and its cross-validated metric; an 80/20 test of the final
-model is described below.
+For the submissions, we fit every model on all training rows and write one CSV per model.
 
 \begin{table}[H]
 \centering
@@ -586,82 +408,22 @@ model is described below.
 \toprule
 Final model & CV score & Public LB & Submission file \\
 \midrule
-Logistic regression, quadratic basis (deg 2, $C=1$) & acc 0.8853 & 0.88812 & \texttt{submission.csv} \\
+Soft vote of quadratic (60\%) and cubic (40\%) logistic & acc 0.8901 & 0.89125 & \texttt{submission.csv} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The public scores that have returned follow the cross-validation ranking:
-quadratic logistic 0.88812, random forest 0.88125, QDA 0.85625, and the
-post-pruned tree 0.84937. The remaining model families (linear logistic,
-LDA, naive Bayes, pre-pruned tree and the random forest plus QDA ensemble) were
-evaluated with cross-validation only.
+The public leaderboard scores on Kaggle were: quadratic logistic 0.88812, cubic logistic 0.88687, random forest 0.88125, QDA 0.85625 and the post-pruned tree 0.84937. We checked the scores for the ensemble models in previous sections (higher than all of these).
 
-% ===========================================================================
-\section{An 80/20 test of the final model}
-% ===========================================================================
-
-We also test the final model on an 80/20 split of the training data.
-This answers a question cross-validation cannot: how the model behaves
-on rows it has never seen, and how much it still depends on the amount of
-training data.
-
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-Training rows & Accuracy & Balanced acc. & Macro $F_1$ \\
-\midrule
-80\% & 0.8953 & 0.8798 & 0.8862 \\
-20\% & 0.8872 & 0.8731 & 0.8782 \\
-\bottomrule
-\end{tabular}
-\caption{Scores of the final model on the unseen 20\% of the training data.}
-\label{tab:machholdout}
-\end{table}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.52\linewidth]{machine_80_20_confusion.png}
-\caption{Confusion matrix of the final model on the unseen 20\% of the training data.}
-\label{fig:machholdoutconf}
-\end{figure}
-
-When we train it on 80\% of the rows it scores 0.8953 on the 20\% it has
-never seen, and even after cutting the training set down to 20\% it still
-holds 0.8872, so the decision boundary is stable and does not lean on
-data volume. The public leaderboard result (0.88812) sits between the
-two, which fits the small spread between the runs.
-
-% ===========================================================================
 \section{Conclusion}
-% ===========================================================================
 
 \begin{itemize}
-  \item The classes are split 2:1:1, but the per-class and balanced metrics
-        show that accuracy is not hiding a weak class: the weakest recall
-        is 83.3\% on thermal failures, and the leading model is best on
-        accuracy, balanced accuracy and macro $F_1$ at the same time.
-  \item The sensors separate the classes in the way the failure physics
-        suggests, and the engineered temperature difference and load ratios
-        sharpen that separation.
-  \item Quadratic boundaries matter: giving logistic regression a degree-2
-        basis takes it from 0.829 to 0.8853, ahead of QDA (0.848) and the random forest (0.879). The random forest is a close second.
-  \item Tree tuning confirmed both pruning routes: pre-pruning peaks at
-        depth 12 with leaf size 5 (0.839), and cost-complexity post-pruning
-        with $\lambda$ about $3\times10^{-4}$ improves it to 0.8429 with
-        161 leaves. All tree variants stay behind the top two models.
-  \item Reweighting, oversampling and SMOTE all reduced both accuracy and
-        macro $F_1$, so the final models are unweighted.
-  \item The best model is the quadratic-basis logistic regression
-        (0.8853 $\pm$ 0.0056), and its submission scores 0.88812 on the
-        public leaderboard.
-  \item We also test the model on an 80/20 split of the training data: it
-        scores 0.8953 when we train it on 80\% of the rows, and still 0.8872
-        after cutting the training set down to 20\%, so the decision
-        boundary is stable and does not lean on data volume.
+  \item Even though the failure types are unevenly distributed (a 2:1:1 split), our accuracy metric isn't masking poor performance on a minority class. We could observe that seeing the lowest recall was 83.3\% for thermal failures, and our top model also led on accuracy, balanced accuracy and macro $F_1$.
+  \item The raw sensor data separates the failure types in the same way that they logically and physically should, and our custom engineered features made the boundaries between them definite.
+  \item The decision boundaries between the machine states are curved. Hence, upgrading standard logistic regression with degree-2 polynomial features increased the accuracy from 0.829 to 0.885, better than both QDA (0.848) and the random forest (0.879); a cubic basis with stronger regularisation reached even higher accuracy (0.889).
+  \item When tuning the decision trees, we tested both pruning methods: setting limits beforehand (pre) (max depth 12, minimum leaf size 5) gave a maximum of 0.839 accuracy, while cost-complexity (post-)pruning increased that further to 0.842.
+  \item We tried handling the class imbalance with class reweighting, oversampling and SMOTE, but all of them were detrimental to the performance metrics.
+  \item Finally, the best-performing model was the 60/40 combination (with soft voting) of the quadratic and cubic logistic regressions: 0.8901 accuracy in cross-validation, and 0.89125 on the public leaderboard for the industrial machine condition classification competition on Kaggle.
 \end{itemize}
 
 \end{document}
